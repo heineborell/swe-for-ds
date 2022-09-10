@@ -1,0 +1,6 @@
+name: erdos
+channels:
+  - defaults
+dependencies:
+  - jupyter
+  - scikit-learn

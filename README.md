@@ -51,6 +51,17 @@ and to deactivate run
 conda deactivate
 ```
 
+### Installing into jupyter
+
+Run the following to make a kernel available iwthin jupyter notebooks that matches your conda environment
+
+```bash
+conda activate erdos
+conda install jupyter
+python -m ipykernel install --user --name erods
+jupyter notebook
+```
+
 
 ## Use pyenv and virtual environments
 
@@ -101,6 +112,10 @@ Then pip install as before, can use `requirements.txt`. Deactivate with
 ```bash
 deactivate
 ```
+
+#### Installing into jupyter
+
+Same as above but with the virtual environment activated instead of the conda environment.
 
 
 ## Other requirements
