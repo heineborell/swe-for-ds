@@ -62,6 +62,19 @@ python -m ipykernel install --user --name erods
 jupyter notebook
 ```
 
+Can see what kernels are installed with
+
+```bash
+jupyter kernelspec list
+```
+
+and remove them with
+
+```bash
+jupyter kernelspec uninstall <NAME>
+```
+
+
 
 ## Use pyenv and virtual environments
 
