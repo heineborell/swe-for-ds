@@ -1,138 +1,55 @@
-# Dependency management
+# Code style
 
-## Use a requirements file
+## PEP 8
 
-Setup `requirements.txt` with any requirements that
-are explicitly imported and not part of the standard
-python library.
+Python style best practices are defined in [PEP 8](https://peps.python.org/pep-0008/).
+It includes things such as using spaces instead of tabs, using 4 spaces to indent,
+and keeping maximum line length at 79 characters. Following community standards
+makes code easier to read, makes the developper appear professional. Code is
+read more often than it is written.
 
-Can install using `pip` via
-
-```bash
-pip install -r requirements.txt
-```
-
-## Use conda
-
-Assuming you have `conda` intalled, you can use
-`conda activate` to start your defualt conda environment.
-
-To build a new environment:
-
-```bash
-conda create -n erdos python=3.10 scikit-learn jupyter
-conda activate erdos
-```
-
-You can then `conda install` or `pip install` just to 
-this specific environment.
-
-To save the environment:
-
-```bash
-conda env export | grep "^prefix: " > environment.yaml
-```
-
-It can then be installed via
-
-```bash
-conda env create -f environment.yaml
-```
-
-To see all environments:
-
-```bash
-conda env list
-```
-
-and to deactivate run
-
-```bash
-conda deactivate
-```
-
-### Installing into jupyter
-
-Run the following to make a kernel available iwthin jupyter notebooks that matches your conda environment
-
-```bash
-conda activate erdos
-conda install jupyter
-python -m ipykernel install --user --name erods
-jupyter notebook
-```
-
-Can see what kernels are installed with
-
-```bash
-jupyter kernelspec list
-```
-
-and remove them with
-
-```bash
-jupyter kernelspec uninstall <NAME>
-```
+One could also look to [google's python style guide](https://google.github.io/styleguide/pyguide.html).
 
 
+## Naming
 
-## Use pyenv and virtual environments
+- Local variables:
+  - Uncapitalized
+  - `snake_case` if multiple words
+  - Descriptive names that aren't too long
+- Functions: same as variables, use verbs consistently
+- Classes: `CamelCase` nouns
+- Modules a/k/a `.py` files: should be snake case as well
+- Packages: same hyphens in the name, but files and directories are snake case
 
+## Comments
 
-### pyenv for python version
+- Triple quotes at the top of the module
+- Docstrings as part of the method:
+  - Single line description
+  - Longer description
+  - Arguments
+  - Returns
+- Other comments should be short hints
+- DO NOT LEAVE COMMENTED OUT CODE IN VERSION CONTROL
 
-Install `pyenv` and then see what verions are available
+## Tools
 
-```bash
-pyenv versions
-```
+### Linters
 
-To see what is installed
+Common linters include `flake8` and `pylint`. These help catch errors
+and style faux pas.
 
-```bash
-pyenv install --list
-```
+### Code style
 
-and then install with
+Popular auto formatter is `black` which is an opinionated formatter, but 
+easy to use.
 
-```bash
-pyenv install 3.10.6
-```
+`isort` will sort your imports alphabetically.
 
-Set the global version with
+### pre-commit
 
-```bash
-pyenv global 3.10.6
-```
-
-and set a local (folder and sub-folder specific) version with
-
-```bash
-pyenv local 3.9.7
-```
-
-### Use venv for dependencies
-
-Create a virtual environment in a `.venv/` directory in your current directory and activate it with
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-Then pip install as before, can use `requirements.txt`. Deactivate with
-
-```bash
-deactivate
-```
-
-#### Installing into jupyter
-
-Same as above but with the virtual environment activated instead of the conda environment.
-
-
-## Other requirements
-
-Make sure to write down in the `README.md` what needs to happen to create
-the development environment. In particular, some python packages, such as `psycopg2` require other
-things to be installed, e.g., postgres. Make sure to make a note of these.
+Can install `pre-commit` and then before committing, linters must not
+give errors and can run the auto formatters. Use by installing, setting
+up `.pre-commit-config.yaml` file, initializing. Can pre-empt use with
+`-n` flag when committing.
