@@ -1,10 +1,12 @@
-import pickle
+from predictor import Predictor
 
-
-with open("clf.pickle", "rb") as f:
-    model = pickle.load(f)
 
 
 if __name__ == "__main__":
-    y = model.predict([[1, 1, 1, 1]])
-    print(y[0])
+
+    predictor = Predictor(".")
+    y = predictor.predict_one([1.2, 0.8, 2.4, 1.2])
+    print(y)
+
+    y_batch = predictor.predict_batch([[1.2, 0.8, 2.4, 1.2], [2.1, 1.4, 1.0, 3.2]])
+    print(y_batch)
