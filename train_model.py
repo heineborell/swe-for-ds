@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 # load data
 iris = datasets.load_iris()
-x = iris.data[:, :2]
+x = iris.data
 y = iris.target
 
 # train model
