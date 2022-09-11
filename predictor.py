@@ -5,6 +5,7 @@ import pickle
 
 class Predictor:
     """make predictions from a model"""
+
     def __init__(self, path: str):
         """initialize class from path to artifact named clf.pickle
 
