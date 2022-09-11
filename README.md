@@ -17,6 +17,7 @@ One could also look to [google's python style guide](https://google.github.io/st
   - Uncapitalized
   - `snake_case` if multiple words
   - Descriptive names that aren't too long
+- Global variables: `ALL_CAPS`
 - Functions: same as variables, use verbs consistently
 - Classes: `CamelCase` nouns
 - Modules a/k/a `.py` files: should be snake case as well
@@ -42,7 +43,7 @@ and style faux pas.
 
 ### Code style
 
-Popular auto formatter is `black` which is an opinionated formatter, but 
+Popular auto formatter is `black` which is an opinionated formatter, but
 easy to use.
 
 `isort` will sort your imports alphabetically.
