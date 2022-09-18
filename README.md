@@ -12,7 +12,7 @@ variable name and not worrying about its value.
 In contrast, there are programming languages, such as golang,
 which are __statically typed__. If you initialize `x` as
 an integer, you can't then say that `x` is going to be a
-string later one. Since in most cases you don't want to re-use
+string later on. Since in most cases you don't want to re-use
 variable names in the same context with different types,
 this makes sense, even though python's choice is very convenient.
 
