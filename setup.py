@@ -17,7 +17,7 @@ requirements_dev = [
 
 setup(
     name="someproject",
-    version="0.1.0",
+    version="0.2.0",
     description="someproject to help you",
     url="https://github.com/TheErdosInstitute/swe-for-de",
     author="The Erdos Institute",
