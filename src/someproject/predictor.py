@@ -1,6 +1,13 @@
 """module containing a predictor which makes predictions"""
 import os
 import pickle
+from abc import ABC, abstractmethod
+
+
+class Model(ABC):
+    @abstractmethod
+    def predict(self, x: list[list[float]]) -> list[int]:
+        pass
 
 
 class Predictor:
@@ -17,7 +24,7 @@ class Predictor:
             self.__model = pickle.load(f)
 
     @property
-    def model(self):
+    def model(self) -> Model:
         """the model used to make predictions"""
         return self.__model
 
