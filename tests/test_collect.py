@@ -17,7 +17,7 @@ def test_collect_samples():
 
 
 def test_generate_sample():
-    want = [2, 2, 2, 2]
+    want = [3, 3, 3, 3]
     got = collect.generate_sample(2, 1)
     assert got == want
 
@@ -27,9 +27,9 @@ def test_collect_samples_1(monkeypatch):
     def mock_generate(sample_number, base):
         return [1, 1, 1, 1]
 
-    monkeypatch.setattr("collect.generate_sample", mock_generate)
+    monkeypatch.setattr("someproject.collect.generate_sample", mock_generate)
 
-    want = [1, 1, 1, 1] * 4
+    want = [[1, 1, 1, 1] for _ in range(4)]
     got = collect.collect_samples(4, 1)
     assert got == want
 
@@ -37,9 +37,9 @@ def test_collect_samples_1(monkeypatch):
 # REFACTOR 2
 def test_collect_samples_2(monkeypatch):
     monkeypatch.setattr(
-        "collect.generate_sample", Mock(return_value=[1, 1, 1, 1])
+        "someproject.collect.generate_sample", Mock(return_value=[1, 1, 1, 1])
     )  # noqa
-    want = [1, 1, 1, 1] * 4
+    want = [[1, 1, 1, 1] for _ in range(4)]
     got = collect.collect_samples(4, 1)
     assert got == want
 
@@ -50,9 +50,9 @@ def mock_generate():
     return Mock(return_value=[1, 1, 1, 1])
 
 
-def test_collect_samples_3(monkeypatch, mock_generate):
-    monkeypatch.setattr("collect.generate_sample", mock_generate)
-    want = [1, 1, 1, 1] * 4
+def test_collect_samples_3(monkeypatch, mock_generate_):
+    monkeypatch.setattr("someproject.collect.generate_sample", mock_generate_)
+    want = [[1, 1, 1, 1] for _ in range(4)]
     got = collect.collect_samples(4, 1)
     assert got == want
-    assert Mock.assset_called()
+    assert mock_generate_.called
