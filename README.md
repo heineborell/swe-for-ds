@@ -1,55 +1,85 @@
-# Packages
+# DRY code and unit testing
 
-We have now reconfigured our repository to be a pip
-installable packages with our packaging managed by `setuptools`.
+## DRY code
 
-To this end we have put our source code under `src/someproject`
-and created a `setup.py` with information about the package
-and `pyproject.toml` with metadata about how to build the
-package indicating that we want to use `setuptools`.
+One of the principles of programming is to write code which is DRY,
+a/k/a Don't Repeat Yourself. If you find yourself typing something more
+than once, it probably belongs in a function.
 
-One thing to note is the namespacing. When adding modules to
-`src/someproject`, other modules are imported using full
-paths such as `from someproject.utils import some_function`.
+## Function scope
 
-## Dependencies and installation
+Building off that, it's worth thinking about the scope of functions
+and how complicated they should be. The complicated a function is,
+the more likely it has a bug and the harder that bug can be to
+track down. Thus functions should be as simple as possible -- one
+unit of code, one set of logic that can be easily tests. So even
+if breaking a function into multiple function doesn't necessarily make
+code more DRY, it can still be helpful.
 
-The `setup.py` file is used to indicate what packages are in
-the repository and what requirements are required by the
-project as well as packages which are optionally installable,
-either for development purposes or to enable fuller funtionality.
-The `setup.py` file can also indicate scripts that are installable
-and then accessible via command line arguments.
+## Unit testing
 
-The package can then be installed locally with `pip install -e ".[dev"]`
-where the `.` indicates the path (we are installing from the current
-directory) and the `[dev]` indicates that we want to install the
-optional `dev` requirements as indicated in `setup.py`. The `-e` means
-to watch changes, i.e., we do not need to re-install upon making
-changes to the modules comprising the package.
+Unit testing is used to test the individual units of code. We'll
+see how to do that with python. By installing and running `pytest`
+we will setup and run any tests in a `tests` directory. Tests
+are discovered if they are in modules with `test` in the name
+and the function also starts with `test`. Test discovery happens
+somewhat more loosely than this, but we can start here.
 
-To install from github using ssh credentials, one can do
-`pip install git+ssh://git@github.com/TheErdosInstitute/swe-for-de` since
-this is where it is hosted. HTTP can also be used, although note that
-the URL will change and you may be asked for your username and password.
+The idea of having a good suite of tests is that as we make changes
+we can be sure that we did not break anything as long as tests
+continue to pass. This of course depends on the tests having sufficient
+coverage. We can test this by installing `pytest-cov` alongside
+`pytest` and running `pytest --cov=src` to indicate that we want
+to check coverage in the `src/` directory. Note that 100% test coverage
+is not the goal, but robust code is. Your code will probably have some
+function or scripts that truly are used to encapsulate business logic and
+require successive function calls. This is a situation where your code
+might not really be unit testable, but as long as the components of these
+functions are tested, this should be sufficient.
 
-Packages are also commonly hosted by [pypi](https://pypi.org/) and it
-is not too hard to build a package and upload it following the instructions
-there. It is best not to spam your packages into the pypi package repository.
-Your company might have its own package repository similar to pypi where
-packages are installed and not available fo rhte wider world.
+Note that if you find a function is hard to unit test, this is usually a
+sign of "code smell" and you probably want to refactor your code so that it
+is more easily unit-testable, as opposed to setting up a very complicated unit
+test.
 
-## Semantic versioning
+In testing, there is the idea of __mocking__ which means that instead of
+instantiating full versions of complicated classes, you create a mock
+version with simplified behavior that can be tests. Mocking is important
+because we want to test each unit of code in isolation from other resources
+and logic as much as possible.
+Examples of how to
+do this in python using `unittest.mocking.Mock` are included. Python
+unit testing also has the idea of fixtures, whereby common objects are
+shared across tests. These can be setup in the test modules themselves or
+in a `fixtures.py` and imported and made available via `conftest.py` that
+helps setup the test environment.
 
-Note that we have provided a version number of the form `0.1.0`.
-This is a [symantic version](https://semver.org/) which has a standard format
-of `Major.Minor.Patch`. Major changes mean the API, a/k/a how people use the
-package, is fundamentally changing in a backward incompatible way. Minor
-changes are used for additions which are backwards compatible,
-and the patch number is incremented for bug fixes, style, and other less essential changes.
-Note that one can tag a repository with the semantic version, typically either as
-`0.1.0` or `v0.1.0`.
 
-Going alongside this, one should [keep a changelog](https://keepachangelog.com/en/1.0.0/)
-describing what has been added, changed, removed, and fixed under each version,
-including changes which are unpublished.
+## Other types of testing
+
+### Functional tests
+
+Consider a unit of code being embedded into a component of an application.
+In unit testing, we focus on the unit itself and other units of code in the component
+including the unit is mocked out. In functional testing, we will not mock out
+these other units and test overall behavior of the component. However,
+other components of the application will be mocked. The goal is to test
+behavior of the component containing the unit of code as a black box, not
+digging into the units of the component.
+
+### End to End (e2e) tests
+
+Expanding the scope again, end to end tests will test the application behavior
+overall treating each component as a black box. However, external applications
+that are called by the application or which call the application will still
+be mocked in some simplified way.
+
+### Integration tests
+
+Finally, integration testing uses no mocked components at all. The environment
+might be the real production environment, but no applications, components, or
+units will be mocked.
+
+After integration testing, there is typically nothing left other than to promote
+the code into the production environment. If something goes wrong, code will be
+rolled back.
