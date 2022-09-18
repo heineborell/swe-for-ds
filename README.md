@@ -25,6 +25,9 @@ are discovered if they are in modules with `test` in the name
 and the function also starts with `test`. Test discovery happens
 somewhat more loosely than this, but we can start here.
 
+
+### Coverage
+
 The idea of having a good suite of tests is that as we make changes
 we can be sure that we did not break anything as long as tests
 continue to pass. This of course depends on the tests having sufficient
@@ -42,6 +45,8 @@ sign of "code smell" and you probably want to refactor your code so that it
 is more easily unit-testable, as opposed to setting up a very complicated unit
 test.
 
+### Mocking
+
 In testing, there is the idea of __mocking__ which means that instead of
 instantiating full versions of complicated classes, you create a mock
 version with simplified behavior that can be tests. Mocking is important
@@ -54,6 +59,16 @@ shared across tests. These can be setup in the test modules themselves or
 in a `fixtures.py` and imported and made available via `conftest.py` that
 helps setup the test environment.
 
+### Test Driven Development
+
+One ideal to strive for is to use __test driven development__. This involves
+setting up just the interfaces (call signatures, return types) of
+each unit of code and then writing complete unit tests before writing any
+actual code. This forces the developer to understand the flow of data
+and how a component should work before actually coding it. While not
+used so often in practice, this is an ideal to strive for. Another name
+for this is __red/green development__ as the tests start out failing (red)
+and end up passing (green).
 
 ## Other types of testing
 
