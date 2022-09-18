@@ -43,3 +43,23 @@ from typing import Union
 
 def foo(a: Union[int, float]):
 ```
+
+
+Unfortunately, since type hints are not required by python, not
+every package has type hints available. And often you have to
+install a completely separte package of __stubs__ to get the
+type hints for a package. This is also something you probably
+only want to do in your development environment not in an
+environment using the code, which leads to the awkwardconstruction
+
+```python
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+  from type_hint_package import FooType
+
+
+def foo() -> "Foo":
+  pass
+```
