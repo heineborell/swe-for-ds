@@ -11,6 +11,8 @@ requirements_dev = [
     "isort",
     "jupyter",
     "pre-commit",
+    "pytest",
+    "pytest-cov",
 ]
 
 setup(
