@@ -1,6 +1,4 @@
-from predictor import Predictor
-
-
+from someproject import Predictor
 
 if __name__ == "__main__":
 
@@ -8,5 +6,6 @@ if __name__ == "__main__":
     y = predictor.predict_one([1.2, 0.8, 2.4, 1.2])
     print(y)
 
-    y_batch = predictor.predict_batch([[1.2, 0.8, 2.4, 1.2], [2.1, 1.4, 1.0, 3.2]])
+    x = [[1.2, 0.8, 2.4, 1.2], [2.1, 1.4, 1.0, 3.2]]
+    y_batch = predictor.predict_batch(x)
     print(y_batch)
