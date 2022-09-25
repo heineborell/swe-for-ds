@@ -1,60 +1,85 @@
-# Object oriented programming
+# Functional programming
 
-One style of programming that is fairly popular within the
-python community is that of __object oriented programming__ (OOP).
-In object oriented programming, one seeks to express the
-complexity of programs by encapsulating different types of data
-and the behaviors that are permitted on the data by
-using classes and then creating instances of those classes
-called objects.
+In object oriented programming, objects are treated as first class citizens
+and functions and methods belong mostly to different objects and
+mutate their state. In contrast, functions are considered the first
+class objects in functional programming. Functions can even be
+returned by other functions and should be composed. One of the key
+ideas is that functions should (typically) be determinstic and not
+dependent on local state and that data should be immutable. The idea
+being that with immutable data, it is easier to track state over time
+as different states of data have to live in different objects, making
+the appearance of bugs easier to track. From experience, the simple
+act of trying to not change the state of objects requires one to
+be more explicit with data transformations and helps create
+simpler, unit-testable functions.
 
-A standard example is that you have a class called something
-like `Entity` which has a name property and a method called `speak`
-and the entity introduces itself using its name. You can then
-create a child class `Person` that inherits the structure of
-the `Entity` and a child class `Dog` both of which will `speak`
-in a different way.
+## Pass by value
 
-In a more realistic example, one might have a `Dataset` class
-with various standard transformations. Instances of the class
-would be instantiated with different sets of data but the
-transforms are the same and the object keeps track of the current
-state of the dataset.
+Pass by value means that when calling a function with parameter `x` a
+new object `x` is created from the input and the input will not be
+changed. In python, simple types can be thought of as pass by reference
+as in the following example:
 
-## Liskov substitution principle
+```python
+def foo(x: int):
+  x = 2
 
-The [Liskov substitution principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle),
-named after Barbara Liskov from a keynote address she gave in at a
-conference in 1988, says that subclasses must be interoperable with
-their parent classes.
+y = 1
+foo(y)
+print(y)
+```
 
-At first glance this makes sense: both `Dog` and `Person` from
-the example above are child classes of `Entity` and if a function
-expects an abstract `Entity`, it will be happy to receive a `Dog` or a
-`Person` since they both have names and the ability to `speak`. The
-child classes `Person` and `Dog` can each have additional properties
-that a basic `Entity` does not have as long as they fulfill the
-interface and assumptions of an `Entity` as well.
+The final line will print out `1`.
 
-However, this requirement that child classes obey the behaviors of
-parent classes in some way requires that a `Square` cannot be a child
-class of a `Rectangle`. While the set of squares may be a subset of the
-set of rectangles, squares are stricter than rectangles. One can edit
-the length of rectangle and keep its height the same, but the same is
-not true for a square. If a function that uses a `Rectangle` requires
-this property, the function will break if it is given a `Square`.
-data.
+## Pass by reference
+
+However, except in simple cases as above, python is actuall passing by
+reference, where new data is not created when invoking a function.
+
+```python
+class Entity:
+  def __init__(self, name: str):
+    self.name = name
+
+
+def foo(e: Entity):
+  e.name = "steve"
+
+
+e = Entity("bob")
+foo(e)
+print(e.name)
+```
+
+This program will print `steve` not because the object pass into `foo`
+was passed by a reference to the original object. In the previous example,
+we got around the fact that python passes by reference by actually
+creating a new object called `2` that we then assigned to the variable
+that happened to have the same name as the input parameter.
+
+For example, the following program will output `bob`:
+
+```python
+class Entity:
+  def __init__(self, name: str):
+    self.name = name
+
+
+def foo(e: Entity):
+  e = Entity("steve")
+
+
+e = Entity("bob")
+foo(e)
+print(e.name)
+```
 
 ## Drawbacks
 
-The idea that data and the methods to transform it are encapsulated together
-is intuitive, but it does introduce some difficulties. In OOP, objects
-are generally assumed to be __mutable__. So if you have an object `x` with
-a property `foo`, then running `x.foo()` might change the data in `x`.
-This can make bugs hard to find, because it is difficult to guarantee that
-`x` is in a given state at a given time. This is in contract to __functional
-programming__ which we will talk about in the next video.
 
-In reality, many languages such as python do not impose a paradigm upon
-the programmer. Object oriented ideas are used when they are useful
-and classes can be defined in ways that their underlying data is immutable.
+Some operations are sort of inherently stateful. Imagine training
+a very large (billions of parameters) neural net. The neural net might
+only just fit into memory, so creating a new version of the neural net
+for every run of backpropagation might not be feasible and updating
+th neural net in place might be required.
