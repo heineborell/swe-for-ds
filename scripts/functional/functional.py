@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     dataset = Dataset(1)
     incremented = increment(dataset)
-    doubled = double(dataset)
+    doubled = double(incremented)
 
     print(dataset.data)
     print(incremented.data)
