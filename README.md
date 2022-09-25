@@ -7,17 +7,19 @@ be as small as possible.
 
 Enabling CI is difficult, how does one ensure that in a multi-developer
 team that changes do not break the code / application? And even if the code
-a developer is proposing works, how do we ensure quality? Obviously the PR
-is an important step, but it also slows the process down. To speed up
-the pace of changes in search of "continuous" integration, there is
-usually an automated testing component. This testing component is sometimes
-referred to as CI itself, even if its purpose is really to enable continuous
-integration.
+a developer is proposing works, how do we ensure quality? We've already seen
+several tools to help a team develop quickly without breaking the code:
+using small PRs is necessary, having comprehensive unit tests that the developer
+and PR reviewer can rely on helps, as does using pre-commit.
+Another tool is to use a CI pipeline. This is an automated testing component
+that is sometimes referred to as CI itself, even if its purpose is really
+to enable continuous integration.
 
 For this repository, we are using GitHub Actions as our CI tool. In
 the parlance of Actions, we have defined a CI workflow via a [YAML](https://yaml.org/)
 file, which is just a structured text file and placed it in the
-`.github/workflows/` directory. Going over that file, the workflow
+`.github/workflows/` directory. This file tells GitHub how to install
+and test our code when we open a pull request. Going over that file, the workflow
 tells GitHub Actions to pull down this repository, use `pip` to install
 the package that is defined in the repo, check for style using `flake8`, and
 run tests using `pytest`.
