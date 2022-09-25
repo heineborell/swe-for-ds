@@ -2,9 +2,9 @@
 
 One style of programming that is fairly popular within the
 python community is that of __object oriented programming__ (OOP).
-In object oriented programming, one seeks to encapsulate the
-complexity of programs by encapsulating different types of
-objects and the behaviors that are permitted on them by
+In object oriented programming, one seeks to express the
+complexity of programs by encapsulating different types of data
+and the behaviors that are permitted on thee data by
 using classes and then creating instances of those classes
 called objects. The objects in object oriented programming
 can be thought of as data and the methods that allow you
