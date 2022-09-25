@@ -1,56 +1,62 @@
-# Continuous Integration
+# Object oriented programming
 
-Continuous integration is the philosophy that we should constantly
-be seeking to implement small changes into the production version of the
-code / the application defined by the code. In CI, implemented changes should
-be as small as possible.
+One style of programming that is fairly popular within the
+python community is that of __object oriented programming__ (OOP).
+In object oriented programming, one seeks to encapsulate the
+complexity of programs by encapsulating different types of
+objects and the behaviors that are permitted on them by
+using classes and then creating instances of those classes
+called objects. The objects in object oriented programming
+can be thought of as data and the methods that allow you
+to interact with that data.
 
-Enabling CI is difficult, how does one ensure that in a multi-developer
-team that changes do not break the code / application? And even if the code
-a developer is proposing works, how do we ensure quality? We've already seen
-several tools to help a team develop quickly without breaking the code:
-using small PRs is necessary, having comprehensive unit tests that the developer
-and PR reviewer can rely on helps, as does using pre-commit.
-Another tool is to use a CI pipeline. This is an automated testing component
-that is sometimes referred to as CI itself, even if its purpose is really
-to enable continuous integration.
+A standard example is that you have a class called something
+like `Entity` which has a name property and a method called `speak`
+and the entity introduces itself using its name. You can then
+create a child class `Person` that inherits the structure of
+the `Entity` and a child class `Dog` both of which will `speak`
+in a different way.
 
-For this repository, we are using GitHub Actions as our CI tool. In
-the parlance of Actions, we have defined a CI workflow via a [YAML](https://yaml.org/)
-file, which is just a structured text file and placed it in the
-`.github/workflows/` directory. This file tells GitHub how to install
-and test our code when we open a pull request. Going over that file, the workflow
-tells GitHub Actions to pull down this repository, use `pip` to install
-the package that is defined in the repo, check for style using `flake8`, and
-run tests using `pytest`.
-Note that all of these actions are occurring not
-on your local machine, but on GitHub's servers! This helps to ensure that
-the code is not working due to some local quirk, but is robust enough
-to be deployed elsewhere. Ideally, your CI environment has the same conditions
-as where the code is deployed and used.
+In a more realistic example, one might have a `Dataset` class
+with various standard transformations. Instances of the class
+would be instantiated with different sets of data but the
+transforms are the same and the object keeps track of the current
+state of the dataset.
 
-A companion to CI is _Continuous Deployment_ or _Continuous Delivery_  (CD),
-and it is common to refer to the two together as CI/CD. This is not implemented
-here, but CD is about very often deploying the changes that are merged into the
-trunk branch. GitHub Actions can also accomplish this deployment process in
-some cases.
+## Liskov substitution principle
 
-There are many CI/CD tools in addition to GitHub Actions including Jenkins,
-Travis, Circle CI.
+The [Liskov substitution principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle),
+named after Barbara Liskov from a keynote address she gave in at a
+conference in 1988, says that subclasses must be interoperable with
+their parent classes.
 
-- [GitHub Actions quickstart](https://docs.github.com/en/actions/quickstart)
-- [Simple workflows](https://github.com/actions/starter-workflows)
+At first glance this makes sense: both `Dog` and `Person` from
+the example above are child classes of `Entity` and if a function
+expects an abstract `Entity`, it will be happy to receive a `Dog` or a
+`Person` since they both have names and the ability to `speak`. The
+child classes `Person` and `Dog` can each have additional properties
+that a basic `Entity` does not have as long as they fulfill the
+interface and assumptions of an `Entity` as well.
 
+However, this requirement that child classes obey the behaviors of
+parent classes in some way requires that a `Square` cannot be a child
+class of a `Rectangle`. While the set of squares may be a subset of the
+set of rectangles, squares are stricter than rectangles. One can edit
+the length of rectangle and keep its height the same, but the same is
+not true for a square. If a function that uses a `Rectangle` requires
+this property, the function will break if it is given a `Square`.
+data.
 
-## Branch protections
+## Drawbacks
 
-In GitHub and other remote repository hosts there is the ability to
-impose branch protections where you require certain conditions before allowing
-a trunk branch to be updated. Typical restrictions include:
+The idea that data and the methods to transform it are encapsulated together
+is intuitive, but it does introduce some difficulties. In OOP, objects
+are generally assumed to be __mutable__. So if you have an object `x` with
+a property `foo`, then running `x.foo()` might change the data in `x`.
+This can make bugs hard to find, because it is difficult to guarantee that
+`x` is in a given state at a given time. This is in contract to __functional
+programming__ which we will talk about in the next video.
 
-- Only allowing changes to the trunk branch via PR
-- Requiring the PR to approved by N reviewers other than the PR author
-- Requiring CI to pass before PRs can be merged
-
-In GitHub this can be accomplished the repository's Settings and selecting
-"Branches" in the left sidebar.
+In reality, many languages such as python do not impose a paradigm upon
+the programmer. Object oriented ideas are used when they are useful
+and classes can be defined in ways that their underlying data is immutable.
