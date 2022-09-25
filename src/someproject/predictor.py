@@ -10,7 +10,7 @@ class Model(ABC):
         pass
 
 
-class Predictor(Model):
+class Predictor:
     """make predictions from a model"""
 
     def __init__(self, path: str):
