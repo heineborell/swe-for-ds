@@ -18,6 +18,7 @@ class DataStore:
         return random.randint(0, 10)
 
 
-def compute_important_value(data: list[int]) -> float:
+def compute_important_value(data: list[int]) -> list[int]:
     """compute bounded computation"""
-    return sum(data) / len(data)
+    time.sleep(len(data) * 0.01)
+    return [datum * 2 for datum in data]
