@@ -18,6 +18,6 @@ class DataStore:
         return random.randint(0, 10)
 
 
-def find_averages(data: list[int]) -> float:
+def compute_important_value(data: list[int]) -> float:
     """compute bounded computation"""
     return sum(data) / len(data)
