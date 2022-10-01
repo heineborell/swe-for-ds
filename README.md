@@ -123,11 +123,20 @@ Not just used for sending data over the internet, JSON can
 be used to serialize other objects and is a common format alongside
 YAML to save configuration for programs and infrastructure.
 
+There is a very convenient library called [pydantic](https://pydantic-docs.helpmanual.io/)
+that has a class called `BaseModel` which can be used to setup
+models using python classes that are easy to serialize to JSON,
+including having the serialized formats use the JSON preference
+for camelCase variable names. It will also validate values
+against the defined types and allows for custom validators on
+the fields in a class which extends `BaseModel`. See the
+changes we made to the `Predictor` class for an example.
+
 Another example of serialization is using `base64` encoding to
 encode binary data as a string which can then be sent over the
 wire. An image can be base64 encoded for example on the command
 line using `base64 image.jpeg > image_base64.txt` and then
-decoded with `base64 -d image_base54.txt > image_2.jpeg`. Python
+decoded with `base64 -d image_base64.txt > image_2.jpeg`. Python
 has a buit in base64 library. Note that this is an encoding but
 NOT encryption -- anyone can decode a base64 encded string to
 its original format.

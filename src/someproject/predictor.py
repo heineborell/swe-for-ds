@@ -3,6 +3,27 @@ import os
 import pickle
 from abc import ABC, abstractmethod
 
+from humps.main import camelize
+from pydantic import BaseModel
+
+
+class IrisData(BaseModel):
+    sepal_length: float
+    sepal_width: float
+    petal_length: float
+    petal_width: float
+
+    class Config:
+        alias_generator = camelize
+        allow_population_by_field_name = True
+
+
+class Prediction(BaseModel):
+    iris_class = 1
+
+    class Config:
+        alias_generator = camelize
+
 
 class Model(ABC):
     @abstractmethod
@@ -28,26 +49,34 @@ class Predictor:
         """the model used to make predictions"""
         return self.__model
 
-    def predict_one(self, x: list[float]) -> int:
-        """take list of length four and return class label 0, 1, 2
+    def predict_one(self, x: IrisData) -> Prediction:
+        """take one set of IrisData and return one prediction
 
         Arguments:
-            x (list[float]): list of floats of length four
+            x (IrisData): the data to predict on
 
         Returns:
-            class label 0, 1, 2
+            Prediction with the iris_class
 
         """
-        return self.model.predict([x])[0]
+        raw_prediction = self.model.predict(
+            [[x.sepal_length, x.sepal_width, x.petal_length, x.petal_width]]
+        )
+        return Prediction(iris_class=raw_prediction)
 
-    def predict_batch(self, x: list[list[float]]) -> list[int]:
-        """take lists of lists and make preductions
+    def predict_batch(self, x: list[IrisData]) -> list[Prediction]:
+        """take lists of IrisData and make predictions
 
         Arguments:
-            x (list[list[float]]): list of lists of length four
+            x (list[IrisData]): list of IrisData to predict on
 
         Returns:
-            list of classlables 0, 1, 2
+            list of Predictions with iris_classes
 
         """
-        return list(self.model.predict(x))
+        raw_data = [
+            [data.sepal_length, data.sepal_width, data.petal_length, data.petal_width]
+            for data in x
+        ]
+        raw_predictions = list(self.model.predict(raw_data))
+        return [Prediction(iris_class=raw) for raw in raw_predictions]
