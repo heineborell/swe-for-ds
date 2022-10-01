@@ -149,7 +149,32 @@ curl -X POST \
      https://some.company.com/models/modelname/predictions
 ```
 
-### Websockets
+Both the `GET` and the `POST` requests are demonstrated in an
+end to end test file under `tests/e2e/test_endpoint.py` for a
+(for now) non-existent endpoint running on localhost, a/k/a the
+machine running the test code.
+
+### Status codes
+
+A response will also look like a request with a body and
+headers and will have a status code. These are between 100
+and 599 with each group of 100 codes indicating a similar condition.
+
+- 100s: not used often,but means the request sould continue
+- 200s: success, usually `200` is the only code used
+- 300s: redirection codes
+- 400s: something is wrong with the request, i.e., client error
+    - `400`: misc bad request
+    - `401`: unauthorized (not sure who requester is)
+    - `403`: forbidden (know the requester, but they can't do the action)
+    - `404`: not found
+    - `418`: I'm a teapot
+    - `422`: unprocessable entity, can be used when the JSON in
+in a request does not conform to the client's expections.
+- 500s: something went wrong with on the server, not the client's fault.
+Typically only `500` is used.
+
+## Websockets
 
 There are in reality multiple flavors of HTTP and we have been exclusively
 talking about `HTTP/1` and `HTTP/1.1`. We have been sending a single request which
