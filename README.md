@@ -110,12 +110,15 @@ So, how do we get around the GIL?
 
 ### Multiprocessing
 
-One approach is to use the built in [multiprocessing](https://docs.python.org/3/library/multiprocessing.html)
-library. When using multiprocessing, one spawns sub processes with each process
-having its own python interpreter and memory. Of course the number of
+Multiprocess parallelism in python is achieved by spawning sub processes,
+each of which has its own python interpreter and memory.
+Of course the number of
 processes that can run at the same time is limited by the number of
 cores on the machine running the parent process. Parallelism properly
-refers to this sort of approach in python.
+refers to this sort of approach in python. This can be done using
+either of two packages built into the standard library:
+[multiprocessing](https://docs.python.org/3/library/multiprocessing.html)
+or [concurrent.futures](https://docs.python.org/3/library/concurrent.futures.html).
 
 Multiprocessing is most beneficial for operations which are __compute
 bounded__, i.e., operations which require heavy computations on a single
@@ -151,7 +154,8 @@ It is somewhat common when processing data to split into multiple processes
 each of which also uses multiple threads. The threads are used to retrieve
 external data, each process then aggregates the thread results to compute
 something, and returns the computed value to the main process which
-aggregates from each of the sub processes.
+aggregates from each of the sub processes. An example is included in
+`scripts/preprocess_data.py`.
 
 Unfortunately, there is no formula which decides how many processes
 or threads to use for a given situation. While the number of cores provides
