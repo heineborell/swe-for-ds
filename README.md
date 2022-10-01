@@ -1,164 +1,133 @@
-# Parallelism
+# Serialization
 
-We'll talk about some ways to speed code up by trying
-to do multiple things at once.
+Generally when talking about objects in python,
+everything from built in lists of integers to
+dataframes to sci-kit learn or pytorch models,  we are
+thinking of the versions of them which exist in memory.
+However, moving data and models around requires either
+saving the models or data to disk or perhaps sending and
+receiving a request over the internet.
 
-## Vectorization
+To do this, we talk about __serializing__ (some languages
+use the term __marshalling__) objects.
 
-The first way to do multiple things at once is to vectorize
-your code. Think of this as instead of using a for loop to
-apply a function to each element of a list in series, but
-running the same function over all the elements in parallel.
+## To disk
 
-### Two examples
+### Data
 
-Using `numpy` directly and the ipython magic `%timeit`:
+For this section, we will consider our in memory object to
+be a pandas dataframe. The most basic way to save the
+dataframe is to save it as a CSV -- comma seperated value
+text value. Note that CSV is a generic term, and data can
+be separated by spaces, tabes, colons, or whatever other
+special character that is desired. When tabs are used, the
+file format is often called a TSV. At the end of the day,
+CSVs are simply text files which have a particular format
+and are human readable.
+
+Another way to save data is as a parquet file. These files
+are column based storage that can partition data into chunks
+based on column values. A parquet file is often a directory
+of parquet files which are automatically created based on
+the desired partitioning. The columnar format means it is
+possible to load slices of the data based on column values.
+Parquet files can also save the data in more compressed
+manner than in the plain text file CSVs. Parquet files
+are not meant to human readable, and have to be interfaced
+with by libraries such as [fastparquet](https://fastparquet.readthedocs.io/en/latest/)
+or [pyarrow](https://arrow.apache.org/docs/python/index.html).
+Note that pandas is able to use these libraries to
+read and write dataframes to parquet files.
+
+### Models
+
+To serialize generic objects, python has the [pickle](https://docs.python.org/3/library/pickle.html)
+package in the standard library. This is a common way to
+save models created in sci-kit learn so that they can then be retrieved
+and used by other code after training time.
+Pickled objects are often saved into files with the ending
+`.pickle` or `.pkl`.
+
+Typically functions an be pickled -- remember, everything in
+python is an object -- but functions which are defined as closures
+are not picklable. The below code, although contrived,
+will produce an `AttributeError`
 
 ```python
-In [1]: import numpy as np
-In [2]: x = np.array([1=*100, dtype=np.int64)
-In [3]: %timeit x*2
-In [4]: def multiply(x):
-   ...:     for i in range(len(x)):
-   ...:         _ = x[i]*2
-   ...:
+import pickle
 
-In [5]: %timeit multiply(x)
+def get_closure(a):
+    def closure(b):
+        return a*b
+    return closure
+
+closure_func = get_closure(2)
+
+with open("closure_func.pickle", "wb") as f:
+    pickle.dump(closure_func, f)
 ```
 
-You should see an order of magnitude difference between
-the vectorized result curtesy of numpy and the non-vectorized
-for loop.
+Other downsides of pickling is that it is python specific and
+pickled objects cannot be transferred to other languages. Pickling
+large amounts of data such as numpy arrays can be very inefficient.
+The external package [joblib](https://joblib.readthedocs.io/en/latest/persistence.html)
+can be used in this case.
 
-Another example is to use pandas which typically relies on
-numpy's vectorization. Again, using ipython we can do the
-following:
+A notable model object which is typically not pickled is a neural
+net. Typically neural nets are written in a framework such as
+[pytorch](https://pytorch.org/tutorials/beginner/saving_loading_models.html#what-is-a-state-dict)
+or [tensorflow](https://www.tensorflow.org/tutorials/keras/save_and_load),
+each of which have their own formats to save models. These formats
+often can be interpreted by other frameworks and languages. Note that
+it is often of interest to save a model to another format, such as
+[ONNX](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html)
+in order to use it in a different, perhaps faster, runtime environment.
 
-```python
-In [1]: import pandas as pd
-In [2]: df = pd.DataFrame({"x": [2.0]*100, "y": [1.0]*100})
-In [3]: %timeit df["pct"] = 100 * (df["x"] / df["y"])
-In [4]: def calc_pct(row):
-   ...:     return 100 * (row["x"] / row["y"])
-   ...:
+## Between languages
 
-In [5]: %timeit df["pct_2"] = df.apply(calc_pct, axis=1)
+In a previous video we spoke about how python code often calls into
+C or Rust to compute things more efficiently. When this is done, the python
+objects must be serialized into a format that the called language understands
+and the responses must be deserialized into a format that python can read.
+
+## Over the wire
+
+In addition to serializing data in order to save it to disk
+and deserializing it later, data must also be serialized to a format
+to be sent over the internet and deserialized upon receipt.
+
+The most common way to send data (when there is not too much data to send)
+is via JSON: javascript object notation. An example of json is
+the following:
+
+```json
+{
+  "someText": "a text string here",
+  "someNumber": -0.47,
+  "someOtherNumber": 2,
+  "someBoolean": true,
+  "someList": ["a", "b", "c"],
+  "otherObject": {
+    "subfield": "hellow world"
+  }
+}
 ```
 
-Once again, you should see about an order of magnitude difference
-between the first, vectorized example and the second, non-vectorized
-example.
+Even though it has javascript in the name, JSON is a simple
+text serialization of data using some rules. It has the basic
+datatypes of strings, numbers, floats, and arrays in addition
+to the objects in the name which resemble python dictionaries
+with strings as the keys.
 
-However, since we are relying on numpy, we will not see the same
-speedup when using string operations.
+Not just used for sending data over the internet, JSON can
+be used to serialize other objects and is a common format alongside
+YAML to save configuration for programs and infrastructure.
 
-```python
-In [1]: import pandas as pd
-In [2]: df = pd.DataFrame({"sentence": ["hello world"]*100})
-In [3]: %timeit df["len"] = df["sentence"].str.split().apply(len)
-In [4]: def get_len(s):
-   ...:     return len(s.split())
-   ...:
-
-In [5]: %timeit df["len2"] = df["sentence"].apply(get_len)
-```
-
-You should actually see that the second example is faster when
-pandas cannot rely on numpy to vectorize the calculation in C.
-
-(These pandas examples adapted from [here](https://pythonspeed.com/articles/pandas-vectorization/#:~:text=Be%20aware%20of%20the%20multiple,t%20use%20native%20code%20loops.))
-
-### How
-
-In some sense, python cannot do things in parallel. Python
-has something called the __Global interpreter lock__ which
-means that the python interpreter which is running your
-program can only be processing one thing at a time. So
-how do we get around that? What numpy is actually doing
-is calling into pure C code which does have true parallelism.
-
-This is a common pattern you will see. The way to make your
-python code faster, is to call into some other language, typically
-C, C++, or rust. For example, the library [polars](https://www.pola.rs/)
-implements dataframes with an API similar to pandas but which
-is more aggressive about calling Rust under the hood, while pandas
-typically relies on numpy as an intermediary to call into C.
-
-## Native python "parallelism"
-
-In addition to calling into another language, there are two
-other ways to have some form of parallelism when writing python.
-
-### Processes vs threads
-
-To understand parallelism in general and in python in particular it
-is necessary to talk about processes and threads. A process can
-be thought of as a single running program. A process can be broken
-up into threads encompassing units of work. Parallelism can be
-achieved on architectures with multiple processors either by
-running multiple processes at once or running a mutiple threads
-under a single process.
-
-The python interpreter acts on one process, and due to something
-called the __global interpreter lock__ (GIL), also runs on only
-one thread at a time eveni n multiple core architectures. This
-makes parallelism in python difficult, hence the solution above
-of calling into code written in C or Rust, languages that do
-not have a GIL.
-
-So, how do we get around the GIL?
-
-### Multiprocessing
-
-Multiprocess parallelism in python is achieved by spawning sub processes,
-each of which has its own python interpreter and memory.
-Of course the number of
-processes that can run at the same time is limited by the number of
-cores on the machine running the parent process. Parallelism properly
-refers to this sort of approach in python. This can be done using
-either of two packages built into the standard library:
-[multiprocessing](https://docs.python.org/3/library/multiprocessing.html)
-or [concurrent.futures](https://docs.python.org/3/library/concurrent.futures.html).
-
-Multiprocessing is most beneficial for operations which are __compute
-bounded__, i.e., operations which require heavy computations on a single
-machine. Vectorized operations fall into this category.
-
-A simple example that might benefit from multiprocessing is an ensemble
-model. Each model can be loaded into a separate process and compute its
-estimate independently. The data is then shared with the parent process
-which decides what the final estimate is. However, note that computers
-also have limited memory, which can also limit the number of processes.
-
-### Multithreading
-
-In contrast to compute bounded programs, there are also situations that
-are __I/O bounded__, i.e., input-output bounded. This occurs most commonly
-when sending requests for data to another machine. In this case, one can
-use multithreading within a single process. Even if the threads cannot
-actually run at the same time due to the GIL, most of their time is
-spent waiting for responses, not actually computing. This is an example
-of __concurrency__, not parallelism. While python has a
-[threading](https://docs.python.org/3.8/library/threading.html) library,
-it is easier to use the thread pool executor from
-[concurrent.futures](https://docs.python.org/3.8/library/threading.html)
-which is also part of the standard library.
-
-Note that even though in python only one thread can be computing at a time,
-one can start as many threads as desired since the number of waiting threads
-is not bounded.
-
-### An example using both
-
-It is somewhat common when processing data to split into multiple processes
-each of which also uses multiple threads. The threads are used to retrieve
-external data, each process then aggregates the thread results to compute
-something, and returns the computed value to the main process which
-aggregates from each of the sub processes. An example is included in
-`scripts/preprocess_data.py`.
-
-Unfortunately, there is no formula which decides how many processes
-or threads to use for a given situation. While the number of cores provides
-an upper bound on the number of processes, each process can have an unlimited
-number of threads waiting at once. The most effective strategy will depend on
-the exact balance of I/O bound waiting, compute time, and memory limits.
+Another example of serialization is using `base64` encoding to
+encode binary data as a string which can then be sent over the
+wire. An image can be base64 encoded for example on the command
+line using `base64 image.jpeg > image_base64.txt` and then
+decoded with `base64 -d image_base54.txt > image_2.jpeg`. Python
+has a buit in base64 library. Note that this is an encoding but
+NOT encryption -- anyone can decode a base64 encded string to
+its original format.
