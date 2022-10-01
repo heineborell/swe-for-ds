@@ -1,5 +1,3 @@
-import json
-
 import requests
 
 
@@ -11,9 +9,7 @@ def test_ping():
 
 
 def test_predictions():
-    r = requests.post(
-        "http://localhost:8080/predictions", json=json.dumps({"x": 1, "y": 2})
-    )
+    r = requests.post("http://localhost:8080/predictions", json={"x": 1, "y": 2})
     assert r.status_code == 200
     assert r.headers["Content-Type"] == "application/json"
     assert "prediction" in r.json().keys()
