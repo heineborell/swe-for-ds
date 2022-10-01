@@ -89,27 +89,72 @@ typically relies on numpy as an intermediary to call into C.
 In addition to calling into another language, there are two
 other ways to have some form of parallelism when writing python.
 
-The reason to put parallelism in quotes is that we want to
-distinguish between two concepts: __parallelism__ and __concurrency__.
+### Processes vs threads
+
+To understand parallelism in general and in python in particular it
+is necessary to talk about processes and threads. A process can
+be thought of as a single running program. A process can be broken
+up into threads encompassing units of work. Parallelism can be
+achieved on architectures with multiple processors either by
+running multiple processes at once or running a mutiple threads
+under a single process.
+
+The python interpreter acts on one process, and due to something
+called the __global interpreter lock__ (GIL), also runs on only
+one thread at a time eveni n multiple core architectures. This
+makes parallelism in python difficult, hence the solution above
+of calling into code written in C or Rust, languages that do
+not have a GIL.
+
+So, how do we get around the GIL?
 
 ### Multiprocessing
 
-Parallelism occurs when your computer is actually processing two things
-at the same time. Your computer will have multiple cores, and you can use
-these cores somewhat independently.
+One approach is to use the built in [multiprocessing](https://docs.python.org/3/library/multiprocessing.html)
+library. When using multiprocessing, one spawns sub processes with each process
+having its own python interpreter and memory. Of course the number of
+processes that can run at the same time is limited by the number of
+cores on the machine running the parent process. Parallelism properly
+refers to this sort of approach in python.
+
+Multiprocessing is most beneficial for operations which are __compute
+bounded__, i.e., operations which require heavy computations on a single
+machine. Vectorized operations fall into this category.
+
+A simple example that might benefit from multiprocessing is an ensemble
+model. Each model can be loaded into a separate process and compute its
+estimate independently. The data is then shared with the parent process
+which decides what the final estimate is. However, note that computers
+also have limited memory, which can also limit the number of processes.
 
 ### Multithreading
 
-In contrast to the parallel processing of using multiprocessing, there is
-multithreading, which splits a program into threads which shrae cores.
-This is using __concurrency__: an individual thread does multiple things
-but tries to alternate between the processes when possible. In particular,
-this is useful for operations which are __I/O bound__. Think of calling to
-an external database to get information or calling an endpoint and waiting
-for a response. A thread can make one call and while waiting for a response,
-make the second call since the thread does not have to do anything during
-the waiting process. The parallelism is really happening elsewhere, and our
-computer can wait while the work is done somewhere else and transmitted back
-to us.
+In contrast to compute bounded programs, there are also situations that
+are __I/O bounded__, i.e., input-output bounded. This occurs most commonly
+when sending requests for data to another machine. In this case, one can
+use multithreading within a single process. Even if the threads cannot
+actually run at the same time due to the GIL, most of their time is
+spent waiting for responses, not actually computing. This is an example
+of __concurrency__, not parallelism. While python has a
+[threading](https://docs.python.org/3.8/library/threading.html) library,
+it is easier to use the thread pool executor from
+[concurrent.futures](https://docs.python.org/3.8/library/threading.html)
+which is also part of the standard library.
+
+Note that even though in python only one thread can be computing at a time,
+one can start as many threads as desired since the number of waiting threads
+is not bounded.
 
 ### An example using both
+
+It is somewhat common when processing data to split into multiple processes
+each of which also uses multiple threads. The threads are used to retrieve
+external data, each process then aggregates the thread results to compute
+something, and returns the computed value to the main process which
+aggregates from each of the sub processes.
+
+Unfortunately, there is no formula which decides how many processes
+or threads to use for a given situation. While the number of cores provides
+an upper bound on the number of processes, each process can have an unlimited
+number of threads waiting at once. The most effective strategy will depend on
+the exact balance of I/O bound waiting, compute time, and memory limits.
