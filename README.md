@@ -1,142 +1,162 @@
-# Serialization
+# REST and HTTP
 
-Generally when talking about objects in python,
-everything from built in lists of integers to
-dataframes to sci-kit learn or pytorch models,  we are
-thinking of the versions of them which exist in memory.
-However, moving data and models around requires either
-saving the models or data to disk or perhaps sending and
-receiving a request over the internet.
+In this tag we'll talk about some of the basic ideas
+of sending information over the internet.
 
-To do this, we talk about __serializing__ (some languages
-use the term __marshalling__) objects.
+## REST endpoints
 
-## To disk
+The most typical way to expose data, in our case a machine
+learning model and its predictions, is via a REST endpoint.
+We won't get into the full technical definition of REST
+endpoints but but below are some core concepts.
 
-### Data
+### Client - server architecture
 
-For this section, we will consider our in memory object to
-be a pandas dataframe. The most basic way to save the
-dataframe is to save it as a CSV -- comma seperated value
-text value. Note that CSV is a generic term, and data can
-be separated by spaces, tabes, colons, or whatever other
-special character that is desired. When tabs are used, the
-file format is often called a TSV. At the end of the day,
-CSVs are simply text files which have a particular format
-and are human readable.
+A core idea in a RESTful system is that there is a separation
+between the client who is requesting something and the server
+which receives requests, hosts and updates data, and and
+responds to the requests.
 
-Another way to save data is as a parquet file. These files
-are column based storage that can partition data into chunks
-based on column values. A parquet file is often a directory
-of parquet files which are automatically created based on
-the desired partitioning. The columnar format means it is
-possible to load slices of the data based on column values.
-Parquet files can also save the data in more compressed
-manner than in the plain text file CSVs. Parquet files
-are not meant to human readable, and have to be interfaced
-with by libraries such as [fastparquet](https://fastparquet.readthedocs.io/en/latest/)
-or [pyarrow](https://arrow.apache.org/docs/python/index.html).
-Note that pandas is able to use these libraries to
-read and write dataframes to parquet files.
+### Statelessness
 
-### Models
+A REST endpoint should be stateless in the sense that one
+client requests should be processed independently of one
+other. This does not mean that requests and different times
+always receive the same response, as underlying data can
+change between requests. However, if request A does not change
+any data, then whether request B is received and processed before
+or after request A does not matter.
 
-To serialize generic objects, python has the [pickle](https://docs.python.org/3/library/pickle.html)
-package in the standard library. This is a common way to
-save models created in sci-kit learn so that they can then be retrieved
-and used by other code after training time.
-Pickled objects are often saved into files with the ending
-`.pickle` or `.pkl`.
+## HTTP
 
-Typically functions an be pickled -- remember, everything in
-python is an object -- but functions which are defined as closures
-are not picklable. The below code, although contrived,
-will produce an `AttributeError`
+Most REST endpoints are exposed via HTTP, the Hypertext Transfer
+Protocol. Just because a service is exposed via HTTP does not
+imply that it is RESTful and vice versa, if a service is RESTful
+it doesn't need to use HTTP. The two are very correlated though.
 
-```python
-import pickle
+In the cases we are interested in, an HTTP request consists of the
+following pieces
+- An endpoint identified by a URL
+- A method used to send the request
+- A header of metadata about the erquest
+- The body of the request which contains data from the sender
 
-def get_closure(a):
-    def closure(b):
-        return a*b
-    return closure
+### Body
 
-closure_func = get_closure(2)
+The body of the request contains the data we will be sending.
+In machine learning applications, this is typically serialized as JSON.
 
-with open("closure_func.pickle", "wb") as f:
-    pickle.dump(closure_func, f)
+### Header
+
+There are several common metadata fields considered in the header, but
+headers can contain arbitrary key-value string pairs.
+
+- `Content-Type: <MIME-TYPE>`: The content type tells the server how to
+interpret the data included in the body. The content type is typically
+a [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types) and common values are `application/json` when sending json, `text/plain`
+for text files, `text/csv` for CSVs, and `text/html` for webpages.
+- `Accept: <MIME-TYPE>`: This tells the server what sort of response type the
+server needs to receive.
+- `Authorization: <some authorization>`: the value is a string that
+indicates the requester should be given access to the data at the endpoint.
+Common values are `Bearer <base64 encoded token>` and a base64 encoded
+string of the form `username:password`.
+
+### Methods
+
+An HTTP request can be sent with one of several typical methods
+each with a different purpose.
+
+- A `GET` request is done to ask for data
+- A `POST` request is done to ask that data be created
+- A `PUT` request is done to create or update data
+- A `DELETE` request is done to ask that some data be deleted
+
+
+### URL
+
+The general format of a URL is the following:
+
+```
+<SCHEME>://<USERNAME>@<HOST>:<PORT>/path/to/data?query=something
 ```
 
-Other downsides of pickling is that it is python specific and
-pickled objects cannot be transferred to other languages. Pickling
-large amounts of data such as numpy arrays can be very inefficient.
-The external package [joblib](https://joblib.readthedocs.io/en/latest/persistence.html)
-can be used in this case.
+Under HTTP, the scheme will be `http`. Very similar to HTTP is
+HTTPS with the scheme `https`. We will limit ourselves to saying that
+the format is similar, but more secure due to encryption of data in
+transit. Most data will travel, even between internal clients at a
+company via HTTPS. We will mostly ignore the differences.
 
-A notable model object which is typically not pickled is a neural
-net. Typically neural nets are written in a framework such as
-[pytorch](https://pytorch.org/tutorials/beginner/saving_loading_models.html#what-is-a-state-dict)
-or [tensorflow](https://www.tensorflow.org/tutorials/keras/save_and_load),
-each of which have their own formats to save models. These formats
-often can be interpreted by other frameworks and languages. Note that
-it is often of interest to save a model to another format, such as
-[ONNX](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html)
-in order to use it in a different, perhaps faster, runtime environment.
+In most HTTP(S) requests, the username and `@` symbol are not needed
+and the port is assumed to be 80 for HTTP and 443 for HTTPS. When
+running services locally, often a different port such as 8080 is used
+since 80 is already in use by the host system, in which case the
+port must be included in the request.
 
-## Between languages
+Typically data is organized on the server in colletions. For example,
+there will be a collection of models which can be said to each have
+a collection of predictions (which are typically not stored on disk,
+unlike traditional data). SO in order to get a prediction, one might
+send a request to a URL of the form
 
-In a previous video we spoke about how python code often calls into
-C or Rust to compute things more efficiently. When this is done, the python
-objects must be serialized into a format that the called language understands
-and the responses must be deserialized into a format that python can read.
-
-## Over the wire
-
-In addition to serializing data in order to save it to disk
-and deserializing it later, data must also be serialized to a format
-to be sent over the internet and deserialized upon receipt.
-
-The most common way to send data (when there is not too much data to send)
-is via JSON: javascript object notation. An example of json is
-the following:
-
-```json
-{
-  "someText": "a text string here",
-  "someNumber": -0.47,
-  "someOtherNumber": 2,
-  "someBoolean": true,
-  "someList": ["a", "b", "c"],
-  "otherObject": {
-    "subfield": "hellow world"
-  }
-}
+```
+https://some.company.com/models/modelname/predictions`
 ```
 
-Even though it has javascript in the name, JSON is a simple
-text serialization of data using some rules. It has the basic
-datatypes of strings, numbers, floats, and arrays in addition
-to the objects in the name which resemble python dictionaries
-with strings as the keys.
+The order of the path being the collection, the id for the item within
+the collection, and then the collection under that item.
 
-Not just used for sending data over the internet, JSON can
-be used to serialize other objects and is a common format alongside
-YAML to save configuration for programs and infrastructure.
+The query section looks like a question mark followed by key-value
+pairs of strings. Building on the previous example, we might
+specify the data we want to go into the prediction as follows
 
-There is a very convenient library called [pydantic](https://pydantic-docs.helpmanual.io/)
-that has a class called `BaseModel` which can be used to setup
-models using python classes that are easy to serialize to JSON,
-including having the serialized formats use the JSON preference
-for camelCase variable names. It will also validate values
-against the defined types and allows for custom validators on
-the fields in a class which extends `BaseModel`. See the
-changes we made to the `Predictor` class for an example.
+```
+https://some.company.com/models/modelname/predictions?x=1&y=1.2&foo=bar
+```
 
-Another example of serialization is using `base64` encoding to
-encode binary data as a string which can then be sent over the
-wire. An image can be base64 encoded for example on the command
-line using `base64 image.jpeg > image_base64.txt` and then
-decoded with `base64 -d image_base64.txt > image_2.jpeg`. Python
-has a buit in base64 library. Note that this is an encoding but
-NOT encryption -- anyone can decode a base64 encded string to
-its original format.
+#### `GET`
+
+Typically, a `GET` request uses queries to pass parameters and
+the body of the request is empty. Using `cURL`, a get request can
+be sent as follows:
+
+```bash
+curl https://some.company.com/models/modelname/predictions?x=1.2&y=3.4
+```
+
+To specify that we expect to receive JSON back and not HTML, say, we
+would send the request as
+
+```bash
+curl -H "Accept: application/json" <URL>
+```
+
+In this model one thinks about retrieving predictions which exist
+under the form of the model (even if they are not saved to disk)
+and the query parameters are used to locate the prediction.
+
+#### `POST`
+
+When sending more data, typically a `POST` request will be used
+and query parameters are not used. An example of sending JSON
+data via `POST` using `cURL`:
+
+```bash
+curl -X POST \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json \
+     -d '{"field1": 1.2, "field2": 3,4, "textField1": "hello world"}' \
+     https://some.company.com/models/modelname/predictions
+```
+
+### Websockets
+
+There are in reality multiple flavors of HTTP and we have been exclusively
+talking about `HTTP/1` and `HTTP/1.1`. We have been sending a single request which
+connects to the server which then gives a single response and closes
+the connection. Under `HTTP/2`, connections can stay open and
+multiple requests and responses can stream in and out before the connection
+is closed. This is commonly referred to as using websockets. This is
+technically possible under `HTTP/1.1`, but is not used often in practice.
+The standard exposure of models is done under `HTTP/1.x`and websockets are
+not used, but this is not a requirement.
