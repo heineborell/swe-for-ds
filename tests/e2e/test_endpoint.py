@@ -1,5 +1,7 @@
 import requests
 
+from someproject import IrisData, Prediction
+
 
 def test_ping():
     r = requests.get("http://localhost:8080/ping")
@@ -9,7 +11,12 @@ def test_ping():
 
 
 def test_predictions():
-    r = requests.post("http://localhost:8080/predictions", json={"x": 1, "y": 2})
+    iris_data = IrisData(
+        sepal_length=1.2, sepal_width=1.4, petal_length=1.5, petal_width=0.3
+    )
+    r = requests.post(
+        "http://localhost:8080/predictions", json=iris_data.json(by_alias=True)
+    )
     assert r.status_code == 200
     assert r.headers["Content-Type"] == "application/json"
-    assert "prediction" in r.json().keys()
+    _ = Prediction(**r.json())
