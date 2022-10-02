@@ -56,7 +56,7 @@ interpret the data included in the body. The content type is typically
 a [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types) and common values are `application/json` when sending json, `text/plain`
 for text files, `text/csv` for CSVs, and `text/html` for webpages.
 - `Accept: <MIME-TYPE>`: This tells the server what sort of response type the
-server needs to receive.
+client needs to receive.
 - `Authorization: <some authorization>`: the value is a string that
 indicates the requester should be given access to the data at the endpoint.
 Common values are `Bearer <base64 encoded token>` and a base64 encoded
