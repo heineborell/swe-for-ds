@@ -38,7 +38,7 @@ In the cases we are interested in, an HTTP request consists of the
 following pieces
 - An endpoint identified by a URL
 - A method used to send the request
-- A header of metadata about the erquest
+- A header of metadata about the request
 - The body of the request which contains data from the sender
 
 ### Body
