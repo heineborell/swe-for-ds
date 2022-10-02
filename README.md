@@ -170,7 +170,7 @@ and 599 with each group of 100 codes indicating a similar condition.
     - `404`: not found
     - `418`: I'm a teapot
     - `422`: unprocessable entity, can be used when the JSON in
-in a request does not conform to the client's expections.
+in a request does not conform to the server's expections.
 - 500s: something went wrong with on the server, not the client's fault.
 Typically only `500` is used.
 
