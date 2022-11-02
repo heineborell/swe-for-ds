@@ -38,6 +38,15 @@ def get_model_error_response(e: Exception) -> Response:
     )
 
 
+@app.get("/ping")
+def ping():
+    return Response(
+        response="",
+        status=200,
+        mimetype="text/plain",
+    )
+
+
 @app.get("/predictions")
 def predictions_get():
 
