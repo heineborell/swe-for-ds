@@ -10,9 +10,32 @@ app = Flask("iris_flask")
 predictor = Predictor(os.environ.get("IRIS_PICKLE_DIR", "."))
 
 
-def validate_args(received: list[str], required: list[str]) -> list[str]:
+def get_validation_error_response(e: ValidationError) -> Response:
     """compares required and received, returning missing args"""
-    return [arg for arg in required if arg not in received]
+    error_data = {
+        "event": "ValidationError",
+        "error": str(e),
+    }
+
+    return Response(
+        response=json.dumps(error_data),
+        status=422,
+        mimetype="application/json",
+    )
+
+
+def get_model_error_response(e: Exception) -> Response:
+    """return 500 for other error"""
+    error_data = {
+        "event": "ModelError",
+        "error": str(e),
+    }
+
+    return Response(
+        response=json.dumps(error_data),
+        status=500,
+        mimetype="application/json",
+    )
 
 
 @app.get("/predictions")
@@ -26,30 +49,32 @@ def predictions_get():
             petal_width=request.args.get("petal_width"),
         )
     except ValidationError as e:
-        error_data = {
-            "event": "ValidationError",
-            "error": str(e),
-        }
-
-        return Response(
-            response=json.dumps(error_data),
-            status=422,
-            mimetype="application/json",
-        )
+        return get_validation_error_response(e)
 
     try:
         prediction = predictor.predict_one(iris_data)
     except Exception as e:
-        error_data = {
-            "event": "ModelError",
-            "error": str(e),
-        }
+        return get_model_error_response(e)
 
-        return Response(
-            response=json.dumps(error_data),
-            status=500,
-            mimetype="application/json",
-        )
+    return Response(
+        response=prediction.json(),
+        status=200,
+        mimetype="application/json",
+    )
+
+
+@app.post("/predictions")
+def predictions_post():
+
+    try:
+        iris_data = IrisData(**request.json)
+    except ValidationError as e:
+        return get_validation_error_response(e)
+
+    try:
+        prediction = predictor.predict_one(iris_data)
+    except Exception as e:
+        return get_model_error_response(e)
 
     return Response(
         response=prediction.json(),
