@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from someproject import IrisData, Predictor
 
 app = Flask("iris_flask")
-predictor = Predictor(os.environ.get("IRIS_PICKLE_DIR", "."))
+predictor = Predictor(os.environ.get("IRIS_PICKLE_DIR", "./artifact"))
 
 
 def get_validation_error_response(e: ValidationError) -> Response:

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from someproject import IrisData, Prediction, Predictor
 
 app = FastAPI(title="iris_fastapi")
-predictor = Predictor(os.environ.get("IRIS_PICKLE_DIR", "."))
+predictor = Predictor(os.environ.get("IRIS_PICKLE_DIR", "./artifact"))
 
 
 @app.get("/ping")
