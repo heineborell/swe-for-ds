@@ -1,0 +1,5 @@
+fastapi[all]
+flask
+gunicorn
+gevent
+uvicorn
