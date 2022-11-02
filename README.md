@@ -4,27 +4,30 @@ For this tag we have added two scripts that can be used
 to serve the iris predictor that we have previously trained.
 These frameworks make it very simple to setup web applications
 and are commonly used to serve machine learning predictions. We
-will not be setting up a front webpage that is viewable, but will
-focus on setting up GET and POST routes that respond via JSON
-which could be called by another application.
+will not be setting up a frontend webpage that is viewable, but will
+focus on setting up `GET` and `POST` routes
+which could be called by another application and responsd via JSON.
 
 The two scripts are in the `serving` folder which has its own requirements,
 which also assumes that `someproject` has been installed in order
 to use the predictor. Ideally this would be in a separete repository with
 its own structure. Note that the structure of this directory does not
 use a `setup.py` file as we are not creating a package, but an application
-that is using packages.
+that is using packages. As such, we use a `requirements.txt` to capture
+dependencies.
 
 ## Flask
 
-The first, and more traditional web framework, is called [flask](https://flask.palletsprojects.com/en/2.2.x/).
-It works by creating a flask application then adding routes to the
-application. These routes are added by taking normal functions and then
+The first, and more traditional, web framework is called [flask](https://flask.palletsprojects.com/en/2.2.x/).
+As seen in the `flask_server.py` module, one creates a `Flask` object
+then adds routes to it.
+These routes are added by taking normal functions and then
 decorating them with `@app.get` or `@app.post` and making sure that they
-return an appropriate `Response` object.
+return an appropriate `Response` object. Functions which provide the logic
+for routes are often called _handlers_.
 
 Assuming that a `clf.pickle` file is present in `serving/artifact`,
-the flask serving can be run from within the `serving/` directory with
+the flask server can be run from within the `serving/` directory with
 the command
 
 ```bash
@@ -55,8 +58,9 @@ have more complex data types.
 
 Note that we have added helper functions in the flask serving script
 to help us validate the data that we are receiving. This has been made
-easier by the factt that we are using pydantic `BaseModel` but we have
-still written our own validation for it.
+easier by the fact that we are using pydantic the `BaseModel` to define our
+input and output data typees, but we have still written our own responses
+based on the built in validation they provide.
 
 ## FastAPI
 
@@ -67,7 +71,7 @@ to the flask implementation, it is clear how much boilerplate we were able to re
 
 Secondly, FastAPI allows for the routes to run concurrently. This is not so important
 when serving compute intensive machine learning models, but if the application needs
-to call other applications creates opportunities for massive speedups. This involves
+to call other applications, this creates opportunities for massive speedups. This involves
 using [asyncio](https://docs.python.org/3.10/library/asyncio.html) which is part of the
 standard library and differs somewhat from the `concurrent.futures` library we
 discussed previously. Since this is not as relevant to our use case, we will limit
@@ -78,7 +82,7 @@ is appropriate for the asynchronous ready FastAPI application, even if we aren't
 these capabilities. The server can be started with
 
 ```bash
-uvicorn src.fastapi_server:app --reload
+uvicorn src.fastapi_server:app --reload --port 8000
 ```
 
 and predictions can be obtained using the same commands as above.
@@ -94,7 +98,7 @@ we which to run at the same time, which gives us access to parallelism as we
 serve the application. Gunicorn handles sending requests to the different workers
 it controls. [Gunicorn configuration docs](https://docs.gunicorn.org/en/stable/configure.html)
 
-To run the flask server from within the `serving/` directory:
+To run the flask application using gunicorn from within the `serving/` directory with two workers:
 
 ```bash
 gunicorn src.flask_server:app --bind 0.0.0.0:8000 --workers 2 --worker-class gevent
