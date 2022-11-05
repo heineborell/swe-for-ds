@@ -1,115 +1,207 @@
-# Two Web Frameworks
+# (Docker) Containers
 
-For this tag we have added two scripts that can be used
-to serve the iris predictor that we have previously trained.
-These frameworks make it very simple to setup web applications
-and are commonly used to serve machine learning predictions. We
-will not be setting up a frontend webpage that is viewable, but will
-focus on setting up `GET` and `POST` routes
-which could be called by another application and responsd via JSON.
+We have previously written two servers that can work locally,
+but how do we package up our code and serve it somewhere else?
+The modern answer to this question is to use __containers__,
+usually __docker containers__ (one implementation of an
+open standard) to
+package up code and its dependencies for deployment
+onto a server. We'll introduce the core concepts behind this,
+but the quick way to think about containers is that they
+are akin to very lightweight virtual machines that are
+separated from whatever else is running on the machine that is
+running the container. We will talk about how this is not quite
+true and their limitations as well.
 
-The two scripts are in the `serving` folder which has its own requirements,
-which also assumes that `someproject` has been installed in order
-to use the predictor. Ideally this would be in a separete repository with
-its own structure. Note that the structure of this directory does not
-use a `setup.py` file as we are not creating a package, but an application
-that is using packages. As such, we use a `requirements.txt` to capture
-dependencies.
+We will be using [docker](https://www.docker.com/) to build
+and run our containers and should be avilable for most operating
+systems and architectures. Docker desktop is free for individuals
+as well as small companies.
 
-## Flask
+## Building images
 
-The first, and more traditional, web framework is called [flask](https://flask.palletsprojects.com/en/2.2.x/).
-As seen in the `flask_server.py` module, one creates a `Flask` object
-then adds routes to it.
-These routes are added by taking normal functions and then
-decorating them with `@app.get` or `@app.post` and making sure that they
-return an appropriate `Response` object. Functions which provide the logic
-for routes are often called _handlers_.
+An __image__ is the packaged up environment and code along with
+running instructions. Images are typically stored in image
+__registries__ with different images belonging to __repositories__
+within the registry and organized by __tags__. As an example,
+we can run `docker images` to see the images that we have on our
+machine to see the image names (which correspond to repositories)
+and tags. Image registries can be public or privately administered
+by the companies using the images. We will only work with public
+images.
 
-Assuming that a `clf.pickle` file is present in `serving/artifact`,
-the flask server can be run from within the `serving/` directory with
-the command
+An image is built from a base image and is built up in layers. This
+can be seen by looking at the `Dockerfile` which defines the image
+we want to build. We see that we are starting with the `python:3.10`
+image, i.e., a publicly available image which comes with
+python 3.10 already installed inside of it. In the course of
+building the image, we see that we are copying our dependencies inside
+of the image and installing them, as well as copying in our code
+and the model artifact. We also specify what command should run upon
+starting the image and which port should be exposed.
+
+To build the image, run
 
 ```bash
-flask --app src.flask_server:app --debug --host 0.0.0.0 --port 8000 run
+docker build --tag iris-server:v0.1.0 .
 ```
 
-The `--debug` flag will allow the server to reload if it detects changes
-in the source code, which is useful for both development and debugging.
+to build an image with name `iris-server` and tag `v0.1.0`. If no
+tag is specificed, the default is `latest`. When building, docker
+will automatically pull the base image, but it can also be pulled
+manually with `docker pull python:3.10`.
 
-To get a prediction from the `GET` route:
+To remove an image, run `docker rmi <IMAGE_NAME>:<TAG>` or
+`docker rmi <SHA>`.
+
+## Running containers
+
+A __container__ is a running image. The philosophy of containers
+is that a container should run one process. If a website has a frontend
+and a backend and a database, these processes will all be running in
+separate containers. We will briefly see later how to combine different
+containers into a single service.
+
+To run our container with the default command, we can simply run
 
 ```bash
-curl "localhost:8000/predictions?sepal_length=1.2&sepal_width=1.2&petal_length=1.2&petal_width=1.2"
+docker run --name iris_1 --port 8000:8000 iris-server:v0.1.0
 ```
 
-To get a prediction from the `POST` route:
+We have named the container `iris_1` and said that we want port 8000 on our
+machine to correspond to port 8000 on the container. We can then curl to the
+container to get a prediction exactly as before:
 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"sepal_length": 1.2, "sepal_width": 1.2, "petal_length": 1.2, "petal_width": 1.2}" \
-  localhost:8000/predictions
+  -d '{"sepal_length": 1.2, "sepal_width": 1.2, "petal_length": 1.2, "petal_width": 1.2}'
+  http://localhost:8000/predictions
 ```
 
-While the `GET` route might be good for single predictions with simple data types,
-the `POST` route is more appropriate for getting batches of predictions and when you
-have more complex data types.
+To see the running containers, use `docker ps` and to see running and stopped
+containers, use the command `docker ps -a`. Containers can be stopped with the
+`docker stop` command and removed with the `docker rm` command.
 
-Note that we have added helper functions in the flask serving script
-to help us validate the data that we are receiving. This has been made
-easier by the fact that we are using pydantic the `BaseModel` to define our
-input and output data typees, but we have still written our own responses
-based on the built in validation they provide.
-
-## FastAPI
-
-A more modern alternative to flask is [FastAPI](https://fastapi.tiangolo.com/), which
-offers two imporvements over flask. The first, which we will take advantage of, is
-that data validation using pydantic is built in. Comparing the FastAPI implementation
-to the flask implementation, it is clear how much boilerplate we were able to remove.
-
-Secondly, FastAPI allows for the routes to run concurrently. This is not so important
-when serving compute intensive machine learning models, but if the application needs
-to call other applications, this creates opportunities for massive speedups. This involves
-using [asyncio](https://docs.python.org/3.10/library/asyncio.html) which is part of the
-standard library and differs somewhat from the `concurrent.futures` library we
-discussed previously. Since this is not as relevant to our use case, we will limit
-ourselves to the mention in this paragraph.
-
-To run the FastAPI application, we will use `uvicorn`, which is an ASGI server which
-is appropriate for the asynchronous ready FastAPI application, even if we aren't using
-these capabilities. The server can be started with
+Containers can also be started with alternate commands. For example, to open a
+bash prompt within the container, one can run
 
 ```bash
-uvicorn src.fastapi_server:app --reload --port 8000
+docker run --rm -i -t iris-server:v0.1.0 bash
 ```
 
-and predictions can be obtained using the same commands as above.
+We added the flags `-i` and `-t` to make the container interactive and attach
+our prompt to it, respectively. The `--rm` flag tells docker to remove
+the container automatically when stopped. Running bash inside the container
+allows us to inspect the image.
 
-## Gunicorn
+## Further topics
 
-Flask warns the user not to use its development server in production,
-and the standard server to use is [gunicorn](https://gunicorn.org/). In contrast
-to the async compatible ASGI server we used with FastAPI, this is a syncronous
-WSGI server. Using gunicorn allows us to control many things such as logging
-styles, but most importantly gives us control over how many workers, i.e., processes,
-we which to run at the same time, which gives us access to parallelism as we
-serve the application. Gunicorn handles sending requests to the different workers
-it controls. [Gunicorn configuration docs](https://docs.gunicorn.org/en/stable/configure.html)
+### Platforms
 
-To run the flask application using gunicorn from within the `serving/` directory with two workers:
+The big difference between containers and virtual machines is that containers
+are dependent on the underlying operating system. This allows them to be
+much lighter weight than virtual machines which must include everything
+related to the operating system as well. The downside is that it might be
+impossible to run a container built for a windows machine on a machine running
+linux. Similarly, the architecture of the machine where the container was built
+plays an important role.
+
+To specify the family of operating systems and architecture, one can use the
+`--platform` option when building. For example, I have an `x86` architecture
+running linux, so building without the `--platform` tag is equivalent to running
 
 ```bash
-gunicorn src.flask_server:app --bind 0.0.0.0:8000 --workers 2 --worker-class gevent
+docker build --platform linux/amd64 .
 ```
 
-Since machine learning applications are synchronous, it still makes sense to use
-multiple processes to serve the FastAPI application, and one can also use gunicorn
-for this use case, as long as the worker class is compatible with asyncronous code
-that FastAPI is using under the hood. To run the FastAPI server from within the
-`serving/` directory:
+If I want to run the container on a Mac OS with an M1 chip, for example, I would
+have to build the container as follows:
 
 ```bash
-gunicorn src.fastapi_server:app --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker
+docker build --platform linux/arm64 .
 ```
+
+(The `linux` part is correct, as Mac OS is unix-like.) An image name and tag can
+exist for multiple architectures, and docker will pull the correct one for your
+machine if possible. Some images built for different architectures might run
+on your machine regardless, but will usually be slower and might have bugs.
+
+### Secrets
+
+It is common to need secrets (passwords, SSH keys, etc) when building images.
+An example is that the image build process requires downloading a file from
+a company database or installing a proprietary python package. In order to
+avoid the secret being extractable from the built image, there is a `--secret`
+option that can be used at build time. For example suppose there is a file
+locally called `password.txt`, to make it available to during the build
+process, one can build with the command
+
+```bash
+docker build --secret id=password,src=password.txt .
+```
+
+while simultaneously having in the dockerfile the line
+
+```
+RUN --mount=type=secret,id=password,dst=/some/path/password.txt COMMAND
+```
+
+and `password.txt` will be available inside the image at `/some/path/password.txt`
+during the running of `COMMAND`.
+
+This is not the only way to handle secrets, but is a common way to use them.
+
+### Volumes
+
+Running containers have a filesystem that is separate from the machine it is
+running on, but you can mount a volume from your filesystem to the container. This
+allows a container to write to a file that then persists on the host machine
+after the container is removed and allows one to load files from the local machine
+to a running container, for example code changes can be loaded into the container
+for testing or development purposes. Using the full path on both the host machine
+and the container, one can mount a directory with the command
+
+```bash
+docker run -v /local/machine/path/foo:/container/path/foo CONTAINER:TAG
+```
+
+Volumes are in fact more general than this, but the general idea of persisting files
+beyond the lifecycle of a single container remains. Containers can share volumes
+that do not point to a folder on the host machine, for example.
+
+### Combining containers
+
+#### Docker compose
+
+As stated above, many services consist of multiple containers each running a
+single process. For example, a simple application might have a frontend
+the user interacts with and a backend that handles reqeusts from the frontend.
+A simple way to orchestrate multiple containers is to use `docker-compose`, which
+is also available as `docker compose` as a subcommand of the `docker` command.
+To use `docker-compose`, one writes a `docker-compose.yaml` file. This allows
+one to start multiple containers with a single `docker-compose up` command
+and to bring them down with a single `docker-compose down` command.
+
+Docker compose can also be used with a single container, and we've included
+a `docker-compose.yaml` file for the images we built previously. This can be
+a useful way to save the starting command into source control (the git repo)
+and, combined ith volumes, can be used to provide a standard way to develop
+the image and use it for end to end testing.
+
+#### Kubernetes
+
+While base docker and docker compose commands can be used to run containers
+on machines, they do not provide more complex orchestration services. For
+example, if a container crashes because it runs out of memory, there is
+no mechanism to automatically restart the container. This is where
+[kubernetes](https://kubernetes.io/) --
+often abbreviated as k8s for the 8 letters betwen the 'k' and 's' -- comes into
+play. Kubernetes is an orchestration software that can be run on multiple
+nodes (a cluster) and handles things such as making sure the correct number of replicas
+for a set of containers is always present. It provides abstraction layers
+that allow groups of containers to interact with other groups of containers
+without the user having to carefully map dozens of ports correctly, for example.
+We will not do more than say that this technology exists and is interacted with
+via YAML files, much like docker compose, but it is quite likely that if you
+create an image it will be deployed on a kubernetes cluster.
