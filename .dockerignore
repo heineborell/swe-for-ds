@@ -1,0 +1,9 @@
+# exclude by default
+**
+
+# include these
+!/serving/*
+!/Dockerfile
+!/src
+!/setup.py
+!/artifact

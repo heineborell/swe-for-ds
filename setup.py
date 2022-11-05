@@ -2,6 +2,7 @@ from setuptools import setup
 
 requirements = [
     'importlib-metadata; python_version == "3.10"',
+    "pyhumps",
     "scikit-learn>=1.1.1",
 ]
 

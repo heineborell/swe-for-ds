@@ -54,6 +54,10 @@ manually with `docker pull python:3.10`.
 To remove an image, run `docker rmi <IMAGE_NAME>:<TAG>` or
 `docker rmi <SHA>`.
 
+Note that we have added a `.dockerignore` file to prevent
+extraneous files from being added into the build context of
+our dockerfile.
+
 ## Running containers
 
 A __container__ is a running image. The philosophy of containers
@@ -75,7 +79,7 @@ container to get a prediction exactly as before:
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"sepal_length": 1.2, "sepal_width": 1.2, "petal_length": 1.2, "petal_width": 1.2}'
+  -d '{"sepal_length": 1.2, "sepal_width": 1.2, "petal_length": 1.2, "petal_width": 1.2}' \
   http://localhost:8000/predictions
 ```
 
@@ -149,6 +153,8 @@ RUN --mount=type=secret,id=password,dst=/some/path/password.txt COMMAND
 
 and `password.txt` will be available inside the image at `/some/path/password.txt`
 during the running of `COMMAND`.
+Note that using this might require the docker buildkit, which can be enabled by
+setting the environment variable `DOCKER_BUILDKIT=1`.
 
 This is not the only way to handle secrets, but is a common way to use them.
 
