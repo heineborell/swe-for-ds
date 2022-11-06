@@ -69,12 +69,13 @@ containers into a single service.
 To run our container with the default command, we can simply run
 
 ```bash
-docker run --name iris_1 --port 8000:8000 iris-server:v0.1.0
+docker run --name iris_1 -p 8080:8080 iris-server:v0.1.0
 ```
 
-We have named the container `iris_1` and said that we want port 8000 on our
-machine to correspond to port 8000 on the container. We can then curl to the
-container to get a prediction exactly as before:
+We have named the container `iris_1` and said that we want port 8080 on our
+machine to correspond to port 8000 on the container. (Note: we could have
+just as well mapped port 8000 on our local machine to port 8000 of the container.)
+We can then curl to the container to get a prediction exactly as before:
 
 ```bash
 curl -X POST \
