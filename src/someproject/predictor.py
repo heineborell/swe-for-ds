@@ -1,4 +1,5 @@
 """module containing a predictor which makes predictions"""
+
 import os
 import pickle
 from abc import ABC, abstractmethod
@@ -37,7 +38,7 @@ class Predictor:
     def __init__(self, path: str):
         """initialize class from path to artifact named clf.pickle
 
-        The pickled model must hvae a predict method which accepts
+        The pickled model must have a predict method which accepts
         lists of lists of 4 floats
 
         """
